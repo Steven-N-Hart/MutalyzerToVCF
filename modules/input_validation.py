@@ -1,5 +1,3 @@
-import logging
-
 from modules.conversions import *
 
 logger = logging.getLogger(__name__)
@@ -8,7 +6,7 @@ logger = logging.getLogger(__name__)
 def parse_line(line):
     new_line = line.strip().split('\t')
     if len(new_line) < 3:
-        return new_line[1], '', None
+        return new_line[0], '', None
     else:
         variant, errors, chrom = new_line[:3]
         return variant, errors, chrom

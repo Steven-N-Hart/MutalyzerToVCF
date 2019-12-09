@@ -43,6 +43,8 @@ def main():
     # Read in mutalyzer file
     with open(args.input, 'r') as f:
         for line in f:
+            if line.startswith('Input'):
+                continue
             submitted_variant, errors, returned_variant = parse_line(line)
             if returned_variant is None:
                 logger.warning('Line does not have enough columns. Skipping: {}'.format(line))

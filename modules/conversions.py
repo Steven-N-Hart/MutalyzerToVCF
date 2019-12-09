@@ -1,5 +1,7 @@
+import logging
 import re
 
+logger = logging.getLogger(__name__)
 
 def convert_ins(variant, fasta_file):
     assert re.search("ins[A-Z]+$", variant), "This doesn\'t look like an insertion: {}".format(variant)
@@ -19,18 +21,19 @@ def convert_delins(variant, fasta_file):
     # NC_000011.9:g.108196200_108196219delinsCA -> chr11    108196199   ATGTATTAAGGACATTCTCAC   ACA
     # NC_000011.9:g.108122705_108122706delinsAT -> chr11    108122704   ATC AAT
     # NC_000017.10:g.41245354delinsTT ->           chr17    41245353    TC  TTT
+    # NC_000013.10:g.32971146_32971147delinsCT ->  chr13    32971145    TGC TCT
     chr = 'chr' + re.sub('NC_[0]+', '', variant.split('.')[0])
     if '_' in variant.split(':')[1].split('.')[1]:
         start = int(variant.split(':')[1].split('.')[1].split('_')[0])
         stop = int(variant.split(':')[1].split('.')[1].split('_')[1].split('delins')[0])
-        new_start = start - 2
+        new_start = start - 1
     else:
-        new_start = int(variant.split(':')[1].split('.')[1].split('delins')[0]) - 2
-        stop = new_start + len(variant.split(':')[1].split('.')[1].split('delins')[1])
+        new_start = int(variant.split(':')[1].split('.')[1].split('delins')[0]) - 1
+        stop = new_start + len(variant.split(':')[1].split('.')[1].split('delins')[1]) - 1
 
-    ref = fasta_file[chr][new_start:stop].seq
+    ref = fasta_file[chr][new_start - 1:stop].seq
     alt = ref[:1] + variant.split('ins')[1]
-    return chr, new_start - 1, ref, alt
+    return chr, new_start, ref, alt
 
 
 def convert_del(variant, fasta_file):
@@ -107,15 +110,16 @@ def convert_dup(variant, fasta_file):
 def convert_snp(variant, fasta_file):
     assert re.search("[0-9][A-Z]>[A-Z]$", variant), "This doesn\'t look like a snp: {}".format(variant)
     # NC_000011.9:g.108186818C>T -> chr11   108186818   C   T
+    # NC_000017.10:g.33434435A>G -> chr17   33434435    T   C   # Reverse strand
     chr = 'chr' + re.sub('NC_[0]+', '', variant.split('.')[0])
 
     var = variant.split(':')[1].split('.')[1]
     start = int(variant.split(':')[1].split('.')[1][:-3])
-    p1 = start - 1
-    p2 = start
 
     ref = fasta_file[chr][start - 1: start].seq
-    ref_1 = variant.split(':')[1].split('.')[1][-3:-2]
-    assert ref == ref_1, "Wrong reference base provided! Provided: {}, Actual: {}".format(ref_1, ref)
+    ref_1 = variant.split(':')[1].split('.')[1][-3:-2].strip()
+    if ref != ref_1:
+        logger.warning("{} Wrong reference base provided! Provided: {}, Actual: {}".format(variant, ref_1, ref))
+
     alt = variant.split(':')[1].split('.')[1][-1:]
     return chr, start, ref, alt
