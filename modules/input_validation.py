@@ -26,6 +26,9 @@ def get_event_type_function(variant):
     elif 'dup' in variant:
         event_type = 'dup'
         parse_function = convert_dup
+    elif 'inv' in variant:
+        event_type = 'inv'
+        parse_function = convert_inv
     elif '>' in variant:
         event_type = 'snp'
         parse_function = convert_snp

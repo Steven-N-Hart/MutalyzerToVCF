@@ -123,3 +123,27 @@ def convert_snp(variant, fasta_file):
 
     alt = variant.split(':')[1].split('.')[1][-1:]
     return chr, start, ref, alt
+
+
+def convert_inv(variant, fasta_file):
+    # NC_000013.10:g.32912299_32912300inv -> chr13      32912298        TTG     TCA
+    chr = 'chr' + re.sub('NC_[0]+', '', variant.split('.')[0])
+    var = variant.split(':')[1].split('.')[1].split('inv')[0]
+    if '_' in var:
+        # NC_000013.10:g.32912299_32912300inv
+        start, stop = [int(x) for x in var.split('_')]
+        start = start - 1
+    else:
+        raise SyntaxError('I have no idea how to parse this inversion: {}'.format(variant))
+
+    ref = fasta_file[chr][start - 1: stop].seq
+    alt = _rev_comp_inv(ref)
+    return chr, start, ref, alt
+
+
+def _rev_comp_inv(seq):
+    init_base = seq[:1]
+    seq = seq[1:]
+    complement = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'}
+    reverse_complement = "".join(complement.get(base, base) for base in reversed(seq))
+    return init_base + reverse_complement
